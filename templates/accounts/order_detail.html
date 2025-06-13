@@ -5,7 +5,7 @@
 
 
 <div class="container" style="margin: 0 auto;width: 50%;padding: 50px;background: #f1f1f1;margin-top: 50px;margin-bottom: 50px;">
-    <div class="row invoice row-printable">
+    <div class="row invoice row-printable" id='printable_div_id'>
         <div class="col-md-12">
             <!-- col-lg-12 start here -->
             <div class="panel panel-default plain" id="dash_0">
@@ -112,7 +112,21 @@
         </div>
         <!-- col-lg-12 end here -->
     </div>
+    <br>
+    <button onClick="printdiv('printable_div_id');" class="btn btn-primary btn-block" >Печат</button>
 </div>
+<script>
+function printdiv(elem) {
+  var header_str = '<html><head><title>' + document.title  + '</title></head><body>';
+  var footer_str = '</body></html>';
+  var new_str = document.getElementById(elem).innerHTML;
+  var old_str = document.body.innerHTML;
+  document.body.innerHTML = header_str + new_str + footer_str;
+  window.print();
+  document.body.innerHTML = old_str;
+  return false;
+}
+</script>
 
 
 {% endblock %}
