@@ -5,6 +5,8 @@ from orders.models import Order, OrderProduct
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+
 
 # Verification email
 from django.contrib.sites.shortcuts import get_current_site
@@ -14,11 +16,13 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 
+
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
 import requests
 
-def  register(request):
+
+def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -28,17 +32,34 @@ def  register(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             username = email.split("@")[0]
-            user = Account.objects.create_user(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
+
+            # Проверка за съществуващ потребител
+            if Account.objects.filter(email=email).exists():
+                messages.error(request, 'Имейл адресът вече е регистриран.')
+                return redirect('register')
+            if Account.objects.filter(username=username).exists():
+                # Добави случайна стойност към username, за да избегнем дублиране
+                import uuid
+                username = f"{username}_{uuid.uuid4().hex[:4]}"
+
+            # Създаване на потребител
+            user = Account.objects.create_user(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                username=username,
+                password=password
+            )
             user.phone_number = phone_number
             user.save()
 
-            # Create User Profile
+            # Създаване на потребителски профил
             profile = UserProfile()
             profile.user_id = user.id
             profile.profile_picture = 'default/default-user.png'
             profile.save()
 
-            # User Activation
+            # Изпращане на активационен имейл
             current_site = get_current_site(request)
             mail_subject = 'Please activate your account'
             message = render_to_string('accounts/account_verifiication_email.html', {
@@ -50,15 +71,15 @@ def  register(request):
             to_email = email
             send_email = EmailMessage(mail_subject, message, to=[to_email])
             send_email.send()
-            # messages.success(request, 'Registration email sent.')
-            return redirect('/accounts/login/?command=verification&email='+email)
-    else: 
+
+            return redirect('/accounts/login/?command=verification&email=' + email)
+    else:
         form = RegistrationForm()
+
     context = {
         'form': form,
     }
     return render(request, 'accounts/register.html', context)
-
 
 def  login(request):
     if request.method == 'POST':
