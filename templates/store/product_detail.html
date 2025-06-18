@@ -53,10 +53,10 @@
       <hr>
         <div class="row">
           <div class="item-option-select">
-            <h6>Избери вкус</h6>
-              <select name="color" class="form-control" required >
-                <option value="" disabled selected>Вкус</option>
-                {% for i in single_product.variation_set.colors %}
+            <h6>Избери екстри</h6>
+               <select name="extra" class="form-control"  >    
+                <option value="" disabled selected>Добавки</option>
+                {% for i in single_product.variation_set.extras %}
                 <option value="{{ i.variation_value | lower }}">{{ i.variation_value | capfirst }}</option>
                 {% endfor %}
               </select>
